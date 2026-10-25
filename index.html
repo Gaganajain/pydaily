@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PyDaily · Learn Python a little every day</title>
+  <meta name="description" content="Free interactive Python revision: meaning, syntax, examples, code you can run, exam traps and quizzes. Build a daily streak.">
+  <meta property="og:title" content="PyDaily · Learn Python a little every day">
+  <meta property="og:description" content="30 bite-sized Python lessons with runnable code, exam traps and an exam mode. Free, no login.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="menuBtn" class="icon-btn" aria-label="Open lessons">☰</button>
+    <a href="#" class="brand"><span class="logo">py</span>Daily</a>
+    <div id="stats" class="stats"></div>
+    <button id="themeBtn" class="icon-btn" aria-label="Toggle dark mode">🌓</button>
+  </header>
+  <div class="layout">
+    <nav id="sidebar" aria-label="Lessons"></nav>
+    <main id="main"></main>
+  </div>
+  <div id="toast" role="status"></div>
+
+  <script src="lessons.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
