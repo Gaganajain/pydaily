@@ -2,7 +2,7 @@
 
 PyDaily is a free, interactive Python revision site. Every lesson explains a concept in plain words and lets you run real Python right in the browser. Nothing to install and no login.
 
-**Live demo:** https://YOUR-USERNAME.github.io/pydaily/
+**Live demo:** https://gaganajain.github.io/pydaily/
 
 ## What each lesson has
 
