@@ -8,22 +8,49 @@
   <meta property="og:title" content="PyDaily · Learn Python a little every day">
   <meta property="og:description" content="30 bite-sized Python lessons with runnable code, exam traps and an exam mode. Free, no login.">
   <meta property="og:type" content="website">
+  <meta name="theme-color" content="#ffd43b">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <button id="menuBtn" class="icon-btn" aria-label="Open lessons">☰</button>
-    <a href="#" class="brand"><span class="logo">py</span>Daily</a>
+    <button id="menuBtn" class="icon-btn" aria-label="Open all lessons">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    </button>
+    <a href="#" class="brand" aria-label="PyDaily home"><span class="logo">py</span><span class="brand-word">Daily</span></a>
+    <button id="searchBtn" class="search-btn" aria-label="Search lessons">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span class="search-label">Jump to a lesson…</span><kbd>Ctrl K</kbd>
+    </button>
     <div id="stats" class="stats"></div>
-    <button id="themeBtn" class="icon-btn" aria-label="Toggle dark mode">🌓</button>
+    <button id="themeBtn" class="icon-btn" aria-label="Toggle dark mode">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+    </button>
   </header>
-  <div class="layout">
-    <nav id="sidebar" aria-label="Lessons"></nav>
-    <main id="main"></main>
+
+  <aside id="drawer" aria-label="All lessons">
+    <div class="drawer-head">
+      <b>All lessons</b>
+      <button id="closeDrawer" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <nav id="sidebar"></nav>
+  </aside>
+  <div id="scrim"></div>
+
+  <main id="main"></main>
+
+  <div id="palette" class="overlay" hidden>
+    <div class="palette-box" role="dialog" aria-label="Search lessons">
+      <input id="paletteInput" type="text" placeholder="Search lessons, e.g. dict, loop, f-string" autocomplete="off" spellcheck="false">
+      <div id="paletteList" role="listbox"></div>
+      <div class="palette-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+    </div>
   </div>
+  <div id="modal" class="overlay" hidden></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
   <div id="toast" role="status"></div>
 
   <script src="lessons.js"></script>
