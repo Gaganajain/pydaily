@@ -17,7 +17,7 @@ PyDaily is a free, interactive Python revision site. Every lesson explains a con
 
 ## Features
 
-- **30 lessons** across 4 sessions: Basics, Logic & loops, Data structures, Functions & modules
+- **41 lessons** across 5 sessions: Basics, Logic & loops, Data structures, Functions & modules, Functional programming
 - **Real Python in the browser** with [Pyodide](https://pyodide.org) (CPython compiled to WebAssembly), running in a Web Worker with a 5-second timeout, so an infinite loop can't freeze the page
 - **Auto-grading**: hidden test code is appended to the learner's code to grade functions
 - **Spaced repetition**: finished lessons come back after 1, 3, 7, 14, then 30 days; a wrong answer resets the gap

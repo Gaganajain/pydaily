@@ -8,7 +8,7 @@ const dayKey = (t = Date.now()) => new Date(t).toLocaleDateString("en-CA"); // Y
 const REVIEW_GAPS = [1, 3, 7, 14, 30]; // days until a lesson is due again, per mastery level
 const LEVEL_XP = 150;
 const XP = { quiz: 5, task: 50, read: 30, review: 20, exam: 5, examPass: 25 };
-const SESSION_ICON = { 1: "✏️", 2: "🔁", 3: "📦", 4: "🧰" };
+const SESSION_ICON = { 1: "✏️", 2: "🔁", 3: "📦", 4: "🧰", 5: "λ" };
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function toast(msg) {
@@ -780,7 +780,7 @@ function route() {
   if (!r) viewHome();
   else if (r === "review") viewReview();
   else if (r === "exam") viewExam(0);
-  else if (/^exam-[1-4]$/.test(r)) viewExam(+r.slice(5));
+  else if (/^exam-\d+$/.test(r) && SESSIONS[r.slice(5)]) viewExam(+r.slice(5));
   else {
     const l = LESSONS.find((x) => x.id === r);
     l ? viewLesson(l) : viewHome();

@@ -195,7 +195,7 @@ main.narrow { max-width: 860px; }
 .chapter-head .meta a { font-weight: 600; }
 .mini-bar { width: 110px; height: 9px; border: 1.5px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--soft); margin: 4px 0 0 auto; }
 .mini-bar i { display: block; height: 100%; background: var(--green); }
-.c1 { --c: #ffd43b; } .c2 { --c: #7cc4ff; } .c3 { --c: #ff9fb2; } .c4 { --c: #b9a6ff; }
+.c1 { --c: #ffd43b; } .c2 { --c: #7cc4ff; } .c3 { --c: #ff9fb2; } .c4 { --c: #b9a6ff; } .c5 { --c: #7ee0b5; }
 .chapter-head .badge { background: var(--c); }
 
 .trail { position: relative; padding: 40px 0 8px; overflow-x: clip; }
