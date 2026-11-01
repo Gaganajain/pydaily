@@ -803,7 +803,8 @@ function askName() {
       <div class="row"><button type="button" class="btn" id="nameSkip">Skip</button><button class="btn primary" type="submit">Save →</button></div>
     </form>`;
   m.hidden = false;
-  $("#nameInput").focus();
+  // on phones, opening the keyboard right away hides the buttons
+  if (!matchMedia("(pointer: coarse)").matches) $("#nameInput").focus();
   const done = (name) => {
     const changed = name !== u.name;
     u.name = name; u.asked = true; saveUser(u);
