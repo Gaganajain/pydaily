@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>PyDaily · Who's learning</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    main { max-width: 1180px; }
+    .lock { max-width: 420px; margin: 8vh auto; text-align: center; }
+    .lock input { width: 100%; margin: 14px 0 10px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--panel-2); color: var(--ink); font: 600 1rem "JetBrains Mono", monospace; outline: none; }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 18px 0 22px; }
+    .table-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: var(--sh); }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { padding: 10px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--soft); }
+    th { font: 700 .75rem "Space Grotesk"; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--panel-2); position: sticky; top: 0; }
+    td.num { font-family: "JetBrains Mono", monospace; text-align: right; }
+    tr.person { cursor: pointer; }
+    tr.person:hover td { background: var(--panel-2); }
+    tr.recent td { white-space: normal; background: var(--bg); font-size: .82rem; color: var(--muted); }
+    .anon { color: var(--muted); font-style: italic; }
+    .fresh { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; }
+    .bar-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .bar-row input { flex: 1; min-width: 180px; padding: 9px 12px; border: 2px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: .95rem Inter, sans-serif; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="./" class="brand"><span class="logo">py</span><span class="brand-word">Daily</span></a>
+    <b style="font-family:'Space Grotesk'">Who's learning</b>
+  </header>
+  <main id="main"></main>
+
+  <script src="lessons.js"></script>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const API = location.hostname.endsWith("github.io") ? "https://pydaily.vercel.app/api" : "/api";
+    const KEY = "pydaily.adminKey";
+    const title = (id) => LESSONS.find((l) => l.id === id)?.title || id || "";
+    let users = [], open = new Set();
+
+    function ago(t) {
+      if (!t) return "";
+      const s = (Date.now() - t) / 1000;
+      if (s < 90) return "just now";
+      if (s < 3600) return `${Math.round(s / 60)} min ago`;
+      if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+      return `${Math.round(s / 86400)} days ago`;
+    }
+    const day = (t) => t ? new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "";
+    const describe = (e) => ({
+      visit: "Opened PyDaily",
+      lesson: `Finished “${title(e.lesson)}”`,
+      quiz: `${e.kind === "daily" ? "Daily quiz" : "Exam " + (e.kind || "")}: ${e.score}/${e.of}`,
+      ask: `Asked the tutor${e.lesson ? ` on “${title(e.lesson)}”` : ""}`,
+      name: "Set their name",
+    }[e.event] || e.event);
+
+    function lockScreen(msg = "") {
+      $("#main").innerHTML = `<div class="card lock">
+        <div class="big-emoji" style="font-size:48px">🔒</div>
+        <h2>Owner only</h2>
+        <p class="muted small">Enter the ADMIN_KEY you set in Vercel. It's remembered on this device only.</p>
+        <form id="lockForm"><input id="keyInput" type="password" autocomplete="current-password" placeholder="Admin key">
+        <button class="btn primary" style="width:100%">Show visitors →</button></form>
+        ${msg ? `<p class="small" style="color:var(--red);margin-top:12px">${esc(msg)}</p>` : ""}</div>`;
+      $("#keyInput").focus();
+      $("#lockForm").onsubmit = (e) => { e.preventDefault(); try { localStorage.setItem(KEY, $("#keyInput").value); } catch {} load(); };
+    }
+
+    async function load() {
+      let key = "";
+      try { key = localStorage.getItem(KEY) || ""; } catch {}
+      if (!key) return lockScreen();
+      $("#main").innerHTML = `<p class="muted">Loading…</p>`;
+      let res;
+      try { res = await fetch(`${API}/users`, { headers: { "X-Admin-Key": key }, cache: "no-store" }); }
+      catch { return lockScreen("Couldn't reach the server. This page only works on pydaily.vercel.app."); }
+      if (res.status === 401) { try { localStorage.removeItem(KEY); } catch {} return lockScreen("That key didn't match ADMIN_KEY."); }
+      if (!res.ok) return lockScreen((await res.text()) || `Server error ${res.status}`);
+      users = (await res.json()).users;
+      render();
+    }
+
+    function render() {
+      const q = ($("#filter")?.value || "").toLowerCase();
+      const now = Date.now();
+      const named = users.filter((u) => u.name).length;
+      const today = users.filter((u) => now - u.lastSeen < 86400000).length;
+      const week = users.filter((u) => now - u.lastSeen < 7 * 86400000).length;
+      const asks = users.reduce((a, u) => a + (u.asks || 0), 0);
+      const rows = users.filter((u) => !q || (u.name || "anonymous").toLowerCase().includes(q));
+      const filterValue = $("#filter")?.value || "";
+      $("#main").innerHTML = `
+        <div class="bar-row"><h1 style="margin:0;font-size:1.8rem;flex:1">Who's learning</h1>
+          <input id="filter" placeholder="Filter by name" value="${esc(filterValue)}">
+          <button class="btn" id="refresh">↻ Refresh</button><button class="btn ghost" id="logout">Lock</button></div>
+        <div class="summary">
+          <div class="stat"><b>${users.length}</b><span>people total (${named} named)</span></div>
+          <div class="stat"><b>${today}</b><span>active in the last 24 h</span></div>
+          <div class="stat"><b>${week}</b><span>active this week</span></div>
+          <div class="stat"><b>${asks}</b><span>tutor questions</span></div>
+        </div>
+        ${users.length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Last seen</th><th>Visits</th><th>Lessons done</th><th>Streak</th><th>XP</th><th>Best exam</th><th>Quizzes</th><th>Tutor Qs</th><th>Last lesson</th><th>First seen</th></tr></thead>
+          <tbody>${rows.map((u) => `
+            <tr class="person" data-id="${esc(u.id)}">
+              <td>${now - u.lastSeen < 86400000 ? '<span class="fresh" title="active in the last 24 h"></span>' : ""}${u.name ? esc(u.name) : '<span class="anon">anonymous</span>'}</td>
+              <td>${ago(u.lastSeen)}</td><td class="num">${u.visits || 0}</td><td class="num">${u.done || 0}/${LESSONS.length}</td>
+              <td class="num">${u.streak || 0} 🔥</td><td class="num">${u.xp || 0}</td><td class="num">${u.examBest || 0}/10</td>
+              <td class="num">${u.quizzes || 0}</td><td class="num">${u.asks || 0}</td><td>${esc(title(u.lastLesson))}</td><td>${day(u.firstSeen)}</td>
+            </tr>
+            ${open.has(u.id) ? `<tr class="recent"><td colspan="11">${u.recent.length ? u.recent.map((e) => `${ago(e.t)}: ${esc(describe(e))}`).join(" · ") : "No activity yet."}</td></tr>` : ""}`).join("")}
+          </tbody></table></div>
+          <p class="small muted" style="margin-top:10px">Click a row to see that person's last 10 actions. Names are whatever each person typed; nobody signs in.</p>`
+          : `<div class="card empty"><div class="big-emoji">🌱</div><h2>No visitors yet</h2><p class="muted">Share pydaily.vercel.app with your friends. They'll show up here after their first visit.</p></div>`}`;
+      $("#refresh").onclick = load;
+      $("#logout").onclick = () => { try { localStorage.removeItem(KEY); } catch {} lockScreen(); };
+      $("#filter").oninput = () => { const pos = $("#filter").selectionStart; render(); $("#filter").focus(); $("#filter").setSelectionRange(pos, pos); };
+      document.querySelectorAll("tr.person").forEach((tr) => (tr.onclick = () => {
+        open.has(tr.dataset.id) ? open.delete(tr.dataset.id) : open.add(tr.dataset.id); render();
+      }));
+    }
+
+    (function theme() { try { const t = localStorage.getItem("pydaily.theme"); if (t) document.documentElement.dataset.theme = t; } catch {} })();
+    load();
+  </script>
+</body>
+</html>

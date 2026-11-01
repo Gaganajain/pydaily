@@ -21,7 +21,7 @@ function toast(msg) {
 
 // ───────────── storage ─────────────
 const KEY = "pydaily.v1";
-const blank = () => ({ lessons: {}, streak: 0, best: 0, lastDay: null, examBest: 0, days: {}, xp: 0 });
+const blank = () => ({ lessons: {}, streak: 0, best: 0, lastDay: null, examBest: 0, days: {}, xp: 0, daily: {} });
 const store = {
   get() {
     try {
@@ -74,6 +74,7 @@ function recordLesson(id, correct, xp = 0) {
   store.set(d);
   renderStats();
   renderSidebar();
+  if (correct && !prev?.done) track("lesson", { lesson: id });
   return { firstTime: correct && !prev?.done, leveledUp, d };
 }
 
@@ -167,8 +168,11 @@ function renderStats() {
 function renderSidebar() {
   const d = store.get();
   const route = location.hash.slice(1);
-  let html = `<div class="tools">
+  const u = getUser();
+  let html = `<button class="who" id="whoBtn">👤 ${u.name ? esc(u.name) : "Add your name"} <span>change</span></button>
+    <div class="tools">
       <a href="#"><span>🗺️</span>Path</a>
+      <a href="#daily"><span>📅</span>Daily</a>
       <a href="#review"><span>🔁</span>Review</a>
       <a href="#exam"><span>📝</span>Exam</a>
     </div>`;
@@ -183,6 +187,7 @@ function renderSidebar() {
     }).join("");
   }
   $("#sidebar").innerHTML = html;
+  $("#whoBtn").onclick = () => { document.body.classList.remove("nav-open"); askName(); };
 }
 
 function setView(html, narrow) {
@@ -336,6 +341,13 @@ function viewHome() {
     <div class="home">
       <div class="path">${chapters}</div>
       <aside class="aside">
+        <a class="card daily-card ${d.daily?.[dayKey()] != null ? "done" : ""}" href="#daily">
+          <span class="daily-icon">📅</span>
+          <div><b>Today's quiz</b><span class="small">${d.daily?.[dayKey()] != null
+            ? `Done: ${d.daily[dayKey()]}/${DAILY_SIZE} ✅ New one tomorrow`
+            : `${DAILY_SIZE} quick questions from Sessions 1–4. Same for everyone today.`}</span></div>
+          <span class="go">${d.daily?.[dayKey()] != null ? "Retry" : "Start"} →</span>
+        </a>
         <div class="card">
           <h3>🔥 ${d.streak} day streak <span class="muted small" style="margin-left:auto">best ${d.best}</span></h3>
           <p class="small muted">${doneToday ? "Today's goal done ✅ See you tomorrow." : "Finish one lesson, review or exam today to keep it."}</p>
@@ -649,23 +661,45 @@ function viewReview() {
 // ───────────── exam ─────────────
 let keyHandler = null;
 
+// same numbers for everyone on the same day, so friends get the same daily quiz
+function seededRandom(seedText) {
+  let h = 1779033703 ^ seedText.length;
+  for (const ch of seedText) h = Math.imul(h ^ ch.charCodeAt(0), 3432918353), h = (h << 13) | (h >>> 19);
+  return () => {
+    h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+const DAILY_SESSIONS = [1, 2, 3, 4];
+const DAILY_SIZE = 5;
+
+// session: 0 for all sessions, a number for one session, or "daily" for today's mixed quiz
 function viewExam(session) {
-  const pool = LESSONS.filter((l) => !session || l.session === session)
+  const daily = session === "daily";
+  const today = dayKey();
+  const pool = LESSONS.filter((l) => daily ? DAILY_SESSIONS.includes(l.session) : !session || l.session === session)
     .flatMap((l) => l.quiz.map((q) => ({ ...q, lesson: l })));
-  const qs = pool.map((q) => [Math.random(), q]).sort((a, b) => a[0] - b[0]).map((x) => x[1]).slice(0, 10);
+  const rand = daily ? seededRandom("pydaily-" + today) : Math.random;
+  const qs = pool.map((q) => [rand(), q]).sort((a, b) => a[0] - b[0]).map((x) => x[1]).slice(0, daily ? DAILY_SIZE : 10);
   let i = 0, score = 0, combo = 0, answered = false;
   const results = [];
   const missed = new Map();
-  const label = session ? `Session ${session} · ${SESSIONS[session]}` : "All sessions";
+  const label = daily ? `Daily quiz · ${new Date().toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+    : session ? `Session ${session} · ${SESSIONS[session]}` : "All sessions";
+  const doneToday = daily && store.get().daily?.[today] != null;
 
   function finish() {
     keyHandler = null;
     const d = store.get();
     const pass = score >= Math.ceil(qs.length * 0.7);
-    const best = qs.length === 10 && score > d.examBest;
+    const best = !daily && qs.length === 10 && score > d.examBest;
     if (best) d.examBest = score;
-    if (pass) bumpStreak(d);
-    const xp = score * XP.exam + (pass ? XP.examPass : 0);
+    const counted = daily && !doneToday; // only the first daily attempt of the day is scored
+    if (counted) d.daily = { ...(d.daily || {}), [today]: score };
+    if (pass || counted) bumpStreak(d);
+    const xp = daily && doneToday ? 0 : score * XP.exam + (pass ? XP.examPass : 0);
+    track("quiz", { kind: daily ? "daily" : session ? "session-" + session : "all", score, of: qs.length });
     const up = addXP(d, xp);
     store.set(d);
     renderStats();
@@ -675,16 +709,18 @@ function viewExam(session) {
     setView(`<div class="card result">
         ${ring(pct, 150, 16, pct >= .7 ? "var(--green)" : pct >= .4 ? "var(--yellow)" : "var(--red)", `${score}/${qs.length}`)}
         <h1>${score === qs.length ? "Flawless 🏆" : pass ? "You passed 🎉" : "Good practice 📚"}</h1>
-        <p class="muted">${esc(label)}${best ? " · new personal best!" : ""}</p>
-        <div class="row"><span class="chip">+${xp} XP</span>${pass ? `<span class="chip hot"><span class="flame">🔥</span>streak counted</span>` : ""}</div>
+        <p class="muted">${esc(label)}${best ? " · new personal best!" : ""}${daily && doneToday ? " · practice round (your first score today is the one that counts)" : ""}</p>
+        <div class="row"><span class="chip">+${xp} XP</span>${pass || counted ? `<span class="chip hot"><span class="flame">🔥</span>streak counted</span>` : ""}</div>
         ${missed.size ? `<div class="missed"><b>Revise these:</b>${[...missed.values()].map((l) => `<a href="#${l.id}"><span>${esc(l.title)}</span><span class="muted small">S${l.session} →</span></a>`).join("")}</div>`
           : `<p style="margin-top:14px">Nothing to revise. Show off a little 😎</p>`}
-        <div class="row" style="margin-top:22px"><button class="btn primary" id="again">↻ New exam</button>
+        ${daily ? `<p class="muted small" style="margin-top:14px">A new daily quiz unlocks tomorrow.</p>` : ""}
+        <div class="row" style="margin-top:22px">${daily ? `<a class="btn primary" href="#">🗺️ Back to path</a>` : `<button class="btn primary" id="again">↻ New exam</button>`}
           <button class="btn" id="shareScore">🔗 Challenge a friend</button></div></div>`, true);
-    $("#again").onclick = () => viewExam(session);
+    if ($("#again")) $("#again").onclick = () => viewExam(session);
     $("#shareScore").onclick = async () => {
-      const url = location.origin + location.pathname + "#exam" + (session ? "-" + session : "");
-      const text = `I scored ${score}/${qs.length} on the PyDaily Python exam (${label}). Can you beat me?`;
+      const url = location.origin + location.pathname + (daily ? "#daily" : "#exam" + (session ? "-" + session : ""));
+      const text = daily ? `I scored ${score}/${qs.length} on today's PyDaily quiz. Same 5 questions for everyone today. Can you beat me?`
+        : `I scored ${score}/${qs.length} on the PyDaily Python exam (${label}). Can you beat me?`;
       try {
         if (navigator.share) await navigator.share({ title: "PyDaily exam", text, url });
         else { await navigator.clipboard.writeText(text + " " + url); toast("Copied! Paste it to a friend."); }
@@ -698,7 +734,7 @@ function viewExam(session) {
     const q = qs[i];
     setView(`<div class="exam-top">
         <a class="btn ghost" href="#" aria-label="Quit exam">✕</a>
-        <div><div class="eyebrow">Exam · ${esc(label)}</div><h1>Question ${i + 1} of ${qs.length}</h1></div>
+        <div><div class="eyebrow">${daily ? "" : "Exam · "}${esc(label)}${doneToday ? " · practice" : ""}</div><h1>Question ${i + 1} of ${qs.length}</h1></div>
         <span class="combo ${combo >= 2 ? "fire" : ""}" id="combo">${combo >= 2 ? `🔥 ${combo} in a row` : `Score ${score}`}</span>
       </div>
       <div class="segs" style="--n:${qs.length}">${qs.map((_, k) => `<i class="${results[k] || (k === i ? "now" : "")}"></i>`).join("")}</div>
@@ -729,9 +765,59 @@ function viewExam(session) {
   show();
 }
 
-// ───────────── tutor chat ─────────────
+// ───────────── visitors ─────────────
 // The GitHub Pages copy has no server, so it borrows the Vercel one.
-const CHAT_URL = location.hostname.endsWith("github.io") ? "https://pydaily.vercel.app/api/chat" : "/api/chat";
+const API_BASE = location.hostname.endsWith("github.io") ? "https://pydaily.vercel.app/api" : "/api";
+const USER_KEY = "pydaily.user";
+
+function getUser() {
+  let u = null;
+  try { u = JSON.parse(localStorage.getItem(USER_KEY)); } catch {}
+  if (!u || !/^[a-z0-9]{8,32}$/.test(u.id || "")) {
+    u = { id: Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join(""), name: "", asked: false };
+    saveUser(u);
+  }
+  return u;
+}
+function saveUser(u) { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch {} }
+
+// fire-and-forget: tracking problems must never get in the way of learning
+function track(event, data = {}) {
+  const u = getUser(), d = store.get();
+  const body = { id: u.id, name: u.name, event, data,
+    stats: { done: doneCount(d), streak: d.streak, xp: d.xp, examBest: d.examBest } };
+  try {
+    fetch(`${API_BASE}/track`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
+  } catch {}
+}
+
+function askName() {
+  const u = getUser();
+  const m = $("#modal");
+  m.innerHTML = `<form class="modal-box name-box" role="dialog" aria-label="Your name">
+      <div class="big-emoji">👋</div>
+      <h2>Hi! What's your name?</h2>
+      <p class="muted">So the person who shared PyDaily with you can see who's learning.</p>
+      <input id="nameInput" type="text" maxlength="40" autocomplete="nickname" placeholder="Your name" value="${esc(u.name)}">
+      <p class="small muted privacy">Shared with PyDaily's owner: your name, when you visit, lessons done, streak, XP, quiz scores, and how many questions you ask the tutor (not the questions themselves). If you skip, visits are counted without a name.</p>
+      <div class="row"><button type="button" class="btn" id="nameSkip">Skip</button><button class="btn primary" type="submit">Save →</button></div>
+    </form>`;
+  m.hidden = false;
+  $("#nameInput").focus();
+  const done = (name) => {
+    const changed = name !== u.name;
+    u.name = name; u.asked = true; saveUser(u);
+    m.hidden = true;
+    if (changed) track("name");
+    renderSidebar();
+    if (name) toast(`Nice to meet you, ${name} 👋`);
+  };
+  $("#nameSkip").onclick = () => done(u.name);
+  $(".name-box").onsubmit = (e) => { e.preventDefault(); done($("#nameInput").value.replace(/\s+/g, " ").trim().slice(0, 40)); };
+}
+
+// ───────────── tutor chat ─────────────
+const CHAT_URL = `${API_BASE}/chat`;
 const CHAT_KEY = "pydaily.chat";
 let chat = [], chatBusy = false;
 try { chat = JSON.parse(sessionStorage.getItem(CHAT_KEY)) || []; } catch {}
@@ -806,6 +892,7 @@ async function sendChat(text) {
   text = text.trim();
   if (!text || chatBusy) return;
   chat.push({ role: "user", content: text });
+  track("ask", { lesson: currentLesson()?.id || "" });
   const history = chat.filter((m) => !m.error);
   const bot = { role: "assistant", content: "" };
   chat.push(bot);
@@ -871,6 +958,7 @@ function paletteItems() {
   const extra = [
     { href: "#", title: "🗺️ Learning path", sub: "home" },
     { href: "#review", title: "🔁 Review due lessons", sub: "review" },
+    { href: "#daily", title: "📅 Daily quiz: 5 questions", sub: "quiz" },
     { href: "#exam", title: "📝 Exam: all sessions", sub: "exam" },
   ];
   const d = store.get();
@@ -910,6 +998,7 @@ function route() {
   if (!r) viewHome();
   else if (r === "review") viewReview();
   else if (r === "exam") viewExam(0);
+  else if (r === "daily") viewExam("daily");
   else if (/^exam-\d+$/.test(r) && SESSIONS[r.slice(5)]) viewExam(+r.slice(5));
   else {
     const l = LESSONS.find((x) => x.id === r);
@@ -950,3 +1039,9 @@ function route() {
 startWorker();
 window.addEventListener("hashchange", route);
 route();
+
+// one "visit" per browser session, and ask for a name once
+try {
+  if (!sessionStorage.getItem("pydaily.visited")) { sessionStorage.setItem("pydaily.visited", "1"); track("visit"); }
+} catch { track("visit"); }
+if (!getUser().asked) setTimeout(() => { if ($("#modal").hidden && $("#palette").hidden) askName(); }, 1200);

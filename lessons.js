@@ -28,6 +28,9 @@ const LESSONS = [
     quiz: [
       { q: 'x = 5\nprint("x is {x}")', options: ["x is 5", "x is {x}", "Error"], answer: 1, why: "There is no f before the quotes, so the braces are printed as plain text." },
       { q: 'print(f"{1234567:,}")', options: ["1234567", "1,234,567", "1.234.567"], answer: 1, why: ":, inserts comma thousand separators." },
+      { q: "print(\"a\", \"b\", sep=\"-\")", options: ["a-b", "a b", "ab"], answer: 0, why: "sep replaces the default space between items." },
+      { q: "price = 7.5\nprint(f\"{price:.2f}\")", options: ["7.5", "7.50", "7.500"], answer: 1, why: ":.2f always shows exactly two decimal places." },
+      { q: "print(\"Hi\", end=\"!\")\nprint(\"there\")", options: ["Hi!there", "Hi! there", "Hi then there"], answer: 0, why: "end replaces the newline, so the next print continues on the same line." },
     ],
   },
   {
@@ -45,6 +48,9 @@ const LESSONS = [
     quiz: [
       { q: "Which is a valid variable name?", options: ["2nd_branch", "total-sales", "_branch_2", "class"], answer: 2, why: "Names may start with an underscore. A digit start, a hyphen, or a keyword are not allowed." },
       { q: "Sales = 100\nsales = 50\nprint(Sales)", options: ["100", "50", "Error"], answer: 0, why: "Names are case-sensitive, so Sales and sales are two different variables." },
+      { q: "Which of these is NOT a valid variable name?", options: ["total_2", "_price", "2total", "Total"], answer: 2, why: "A name can't start with a digit." },
+      { q: "a, b = 1, 2\na, b = b, a\nprint(a, b)", options: ["1 2", "2 1", "Error"], answer: 1, why: "a, b = b, a swaps the two values in one line." },
+      { q: "x = 5\nx = x + 1\nx += 2\nprint(x)", options: ["8", "7", "5"], answer: 0, why: "5 becomes 6, then += 2 makes it 8." },
     ],
   },
   {
@@ -61,6 +67,9 @@ const LESSONS = [
     quiz: [
       { q: 'print(type("42"))', options: ["<class 'int'>", "<class 'str'>", "<class 'float'>"], answer: 1, why: "Anything inside quotes is a string." },
       { q: "print(True + True)", options: ["2", "True", "Error"], answer: 0, why: "bool is a subtype of int: True is 1 and False is 0." },
+      { q: "print(type(3.0))", options: ["<class 'int'>", "<class 'float'>", "<class 'str'>"], answer: 1, why: "A decimal point makes it a float, even when it ends in .0." },
+      { q: "print(type(None))", options: ["<class 'NoneType'>", "None", "<class 'null'>"], answer: 0, why: "None has its own type: NoneType." },
+      { q: "print(isinstance(True, int))", options: ["True", "False", "Error"], answer: 0, why: "bool is a subtype of int, so True counts as an int." },
     ],
   },
   {
@@ -79,6 +88,8 @@ const LESSONS = [
       { q: 'print("5" * 3)', options: ["15", "555", "TypeError"], answer: 1, why: "str * int repeats the string." },
       { q: "print(int(7.9))", options: ["8", "7", "7.9"], answer: 1, why: "int() truncates toward zero; it does not round." },
       { q: 'print("10" + 5)', options: ["15", "105", "TypeError"], answer: 2, why: "You cannot add a str and an int. Convert one of them first." },
+      { q: "print(int(\"3.5\"))", options: ["3", "3.5", "ValueError"], answer: 2, why: "int() can't read a decimal string. Use int(float(\"3.5\"))." },
+      { q: "print(float(\"3\") + 1)", options: ["4", "4.0", "31"], answer: 1, why: "float() gives 3.0, and 3.0 + 1 is 4.0." },
     ],
   },
   {
@@ -97,6 +108,8 @@ const LESSONS = [
       { q: "print(10 / 2)", options: ["5", "5.0", "2"], answer: 1, why: "/ always returns a float." },
       { q: "print(2 + 3 * 4)", options: ["20", "14", "24"], answer: 1, why: "* runs before +." },
       { q: "print(-7 // 2)", options: ["-3", "-4", "-3.5"], answer: 1, why: "Floor division rounds down, and down from -3.5 is -4." },
+      { q: "print(17 % 5)", options: ["2", "3", "3.4"], answer: 0, why: "% gives the remainder: 17 = 3 * 5 + 2." },
+      { q: "print(2 ** 3 ** 2)", options: ["512", "64", "36"], answer: 0, why: "** works right to left: 3 ** 2 is 9, then 2 ** 9 is 512." },
     ],
   },
   {
@@ -113,6 +126,9 @@ const LESSONS = [
     quiz: [
       { q: "print(0.1 + 0.2 == 0.3)", options: ["True", "False"], answer: 1, why: "Floats are stored in binary, so 0.1 + 0.2 is 0.30000000000000004." },
       { q: 'print("apple" < "banana")', options: ["True", "False", "Error"], answer: 0, why: "Strings compare alphabetically (character by character)." },
+      { q: "print(5 == 5.0)", options: ["True", "False", "Error"], answer: 0, why: "== compares values, and 5 and 5.0 are the same number." },
+      { q: "print(1 < 2 < 3)", options: ["True", "False", "Error"], answer: 0, why: "Python chains comparisons: 1 < 2 and 2 < 3." },
+      { q: "print(\"10\" == 10)", options: ["True", "False", "TypeError"], answer: 1, why: "A string is never equal to a number. == doesn't crash, it just says False." },
     ],
   },
   {
@@ -130,6 +146,9 @@ const LESSONS = [
     quiz: [
       { q: 's = "chai"\ns.upper()\nprint(s)', options: ["CHAI", "chai", "Error"], answer: 1, why: ".upper() returns a new string; s itself is unchanged because strings are immutable." },
       { q: 'print("a,b,,c".split(","))', options: ["['a', 'b', 'c']", "['a', 'b', '', 'c']", "['a,b,,c']"], answer: 1, why: "Two commas in a row produce an empty string between them." },
+      { q: "print(\"  chai  \".strip() + \"!\")", options: ["chai!", "  chai  !", "chai !"], answer: 0, why: "strip() removes spaces from both ends." },
+      { q: "print(\"masala dosa\".title())", options: ["Masala Dosa", "MASALA DOSA", "Masala dosa"], answer: 0, why: "title() capitalises the first letter of every word." },
+      { q: "print(\"-\".join([\"a\", \"b\", \"c\"]))", options: ["a-b-c", "-a-b-c-", "['a', 'b', 'c']"], answer: 0, why: "join puts the separator BETWEEN items only." },
     ],
   },
 
@@ -148,6 +167,9 @@ const LESSONS = [
     quiz: [
       { q: "print(True or False and False)", options: ["True", "False"], answer: 0, why: "and binds tighter: True or (False and False) → True or False → True." },
       { q: 'print(0 or "guest")', options: ["0", "guest", "True"], answer: 1, why: "or returns the first truthy value it finds." },
+      { q: "print(not 0)", options: ["True", "False", "0"], answer: 0, why: "0 is falsy, so not 0 is True." },
+      { q: "print(3 and 5)", options: ["5", "3", "True"], answer: 0, why: "and returns the last value it checked when everything is truthy." },
+      { q: "print(None or 0)", options: ["0", "None", "False"], answer: 0, why: "or returns the last value when nothing is truthy." },
     ],
   },
   {
@@ -164,6 +186,9 @@ const LESSONS = [
     quiz: [
       { q: 'print("sale" in "wholesale")', options: ["True", "False"], answer: 0, why: "in on strings checks for a substring." },
       { q: "x = 0\nprint(x != 0 and 10 / x > 1)", options: ["False", "ZeroDivisionError", "True"], answer: 0, why: "x != 0 is False, so Python short-circuits and never divides." },
+      { q: "print(\"a\" in {\"a\": 1, \"b\": 2})", options: ["True", "False", "Error"], answer: 0, why: "in on a dict checks the keys." },
+      { q: "print(1 in {\"a\": 1})", options: ["True", "False", "Error"], answer: 1, why: "in on a dict looks at keys only, not values." },
+      { q: "Why write orders > 0 and revenue / orders > 100 in that order?", options: ["It's easier to read", "If orders is 0, the division is skipped", "Python requires it"], answer: 1, why: "and stops at the first False, so the guard on the left prevents dividing by zero." },
     ],
   },
   {
@@ -180,6 +205,9 @@ const LESSONS = [
     quiz: [
       { q: "score = 90\nif score >= 50:\n    print('C')\nelif score >= 80:\n    print('A')", options: ["A", "C", "A and C"], answer: 1, why: "The first True condition wins; the elif is never checked." },
       { q: "x = 5\nif x > 2:\n    print('a')\nif x > 3:\n    print('b')", options: ["a", "b", "a then b"], answer: 2, why: "These are two separate if statements, not if/elif, so both run." },
+      { q: "x = 0\nif x:\n    print('yes')\nelse:\n    print('no')", options: ["yes", "no", "Error"], answer: 1, why: "0 is falsy, so the else branch runs." },
+      { q: "t = 25\nif t > 30:\n    print('hot')\nelif t > 20:\n    print('warm')\nelif t > 10:\n    print('cool')", options: ["warm", "warm then cool", "cool"], answer: 0, why: "Only the FIRST true branch runs; the rest are skipped." },
+      { q: "What is wrong with the line if x = 5: ?", options: ["Nothing", "It needs == to compare", "It needs a semicolon"], answer: 1, why: "= assigns, == compares. if x = 5: is a SyntaxError." },
     ],
   },
   {
@@ -197,6 +225,8 @@ const LESSONS = [
       { q: 'print(bool("False"))', options: ["False", "True", "Error"], answer: 1, why: "Any non-empty string is truthy, whatever it says." },
       { q: "print(bool([0]))", options: ["False", "True"], answer: 1, why: "A list with one item is truthy, even if that item is 0." },
       { q: "print(bool(0.0))", options: ["False", "True"], answer: 0, why: "Zero of any number type is falsy." },
+      { q: "print(bool(\" \"))", options: ["True", "False"], answer: 0, why: "A space is still a character, so the string isn't empty." },
+      { q: "items = []\nprint('empty' if not items else 'has items')", options: ["empty", "has items", "Error"], answer: 0, why: "An empty list is falsy, so not items is True." },
     ],
   },
   {
@@ -212,6 +242,10 @@ const LESSONS = [
     solution: 'is_veg = True\nprint("Veg" if is_veg else "Non-veg")',
     quiz: [
       { q: "x = 7\nprint('even' if x % 2 == 0 else 'odd')", options: ["even", "odd", "Error"], answer: 1, why: "7 % 2 is 1, so the condition is False and the else value is used." },
+      { q: "age = 15\nprint('adult' if age >= 18 else 'minor')", options: ["adult", "minor", "Error"], answer: 1, why: "15 >= 18 is False, so the else value is used." },
+      { q: "n = 0\nprint('pos' if n > 0 else 'zero' if n == 0 else 'neg')", options: ["pos", "zero", "neg"], answer: 1, why: "The second ternary is checked only after n > 0 fails." },
+      { q: "In 'yes' if ok else 'no', which part is the condition?", options: ["'yes'", "ok", "'no'"], answer: 1, why: "The condition sits in the middle, between if and else." },
+      { q: "x = 5\nif x > 0:\n    if x > 10:\n        print('big')\n    else:\n        print('small')", options: ["big", "small", "Nothing"], answer: 1, why: "The outer if passes; inside it, 5 > 10 fails, so else runs." },
     ],
   },
   {
@@ -229,6 +263,9 @@ const LESSONS = [
     quiz: [
       { q: "print(list(range(1, 10, 3)))", options: ["[1, 4, 7]", "[1, 4, 7, 10]", "[3, 6, 9]"], answer: 0, why: "Start at 1, step by 3, stop BEFORE 10." },
       { q: "print(len(list(zip([1, 2, 3], ['a', 'b']))))", options: ["2", "3", "5"], answer: 0, why: "zip stops at the shortest input." },
+      { q: "for i in range(3):\n    pass\nprint(i)", options: ["2", "3", "Error"], answer: 0, why: "range(3) stops at 2, and i keeps its last value after the loop." },
+      { q: "for i, c in enumerate(\"ab\", 1):\n    print(i, c)", options: ["1 a then 2 b", "0 a then 1 b", "a 1 then b 2"], answer: 0, why: "enumerate(..., 1) starts counting at 1 and gives (number, item)." },
+      { q: "total = 0\nfor n in [10, 20, 30]:\n    total += n\nprint(total)", options: ["60", "30", "[10, 20, 30]"], answer: 0, why: "The loop adds each number to total: 10 + 20 + 30." },
     ],
   },
   {
@@ -246,6 +283,9 @@ const LESSONS = [
     quiz: [
       { q: "n = 0\nwhile n < 3:\n    n += 1\nprint(n)", options: ["2", "3", "4"], answer: 1, why: "The loop stops once n reaches 3." },
       { q: "x = 10\nwhile x < 5:\n    x += 1\nprint(x)", options: ["5", "10", "Infinite loop"], answer: 1, why: "The condition is False at the start, so the body never runs." },
+      { q: "n = 10\nwhile n > 0:\n    n -= 3\nprint(n)", options: ["-2", "1", "0"], answer: 0, why: "10, 7, 4, 1, then -2: the loop stops once n is no longer above 0." },
+      { q: "count = 0\nwhile count < 3:\n    print(count)\n    count += 1", options: ["0 then 1 then 2", "1 then 2 then 3", "0 then 1 then 2 then 3"], answer: 0, why: "It prints before adding 1, and stops when count reaches 3." },
+      { q: "What happens if a while loop never changes the variable in its condition?", options: ["It runs once", "It can loop forever", "Python fixes it"], answer: 1, why: "If the condition stays True, the loop never ends." },
     ],
   },
   {
@@ -262,6 +302,9 @@ const LESSONS = [
     quiz: [
       { q: "for i in range(3):\n    pass\nelse:\n    print('done')", options: ["done", "Nothing", "Error"], answer: 0, why: "There was no break, so the else block runs." },
       { q: "for i in range(5):\n    if i == 2:\n        break\nelse:\n    print('done')\nprint(i)", options: ["done then 2", "2", "4"], answer: 1, why: "break skips the loop's else; i stays 2." },
+      { q: "for i in range(5):\n    if i == 2:\n        continue\n    print(i, end=' ')", options: ["0 1 3 4", "0 1", "0 1 2 3 4"], answer: 0, why: "continue skips the rest of that round only; the loop carries on." },
+      { q: "while True:\n    print('hi')\n    break", options: ["hi", "Nothing", "Infinite loop"], answer: 0, why: "break stops the loop right after the first print." },
+      { q: "for n in [1, 3, 5]:\n    if n % 2 == 0:\n        print('found')\n        break\nelse:\n    print('none')", options: ["found", "none", "found then none"], answer: 1, why: "No even number, so break never runs and the loop's else does." },
     ],
   },
 
@@ -280,6 +323,9 @@ const LESSONS = [
     quiz: [
       { q: 'print("python"[1:4])', options: ["pyt", "yth", "ytho"], answer: 1, why: "Indices 1, 2, 3 are y, t, h. The stop index 4 is excluded." },
       { q: 'print("chai"[::-1])', options: ["iahc", "chai", "Error"], answer: 0, why: "A step of -1 walks backwards." },
+      { q: "s = \"python\"\nprint(s[-1])", options: ["n", "p", "Error"], answer: 0, why: "-1 is the last character." },
+      { q: "print(\"python\"[:2])", options: ["py", "pyt", "on"], answer: 0, why: "[:2] takes indices 0 and 1; the end is not included." },
+      { q: "s = \"chai\"\nprint(s[10])", options: ["''", "IndexError", "None"], answer: 1, why: "A single index past the end crashes; only slices are forgiving." },
     ],
   },
   {
@@ -297,6 +343,9 @@ const LESSONS = [
     quiz: [
       { q: "x = [3, 1, 2].sort()\nprint(x)", options: ["[1, 2, 3]", "None", "Error"], answer: 1, why: ".sort() sorts in place and returns None." },
       { q: "a = [1, 2, 3]\na.append([4, 5])\nprint(len(a))", options: ["4", "5"], answer: 0, why: "append adds the whole list as ONE item. Use extend to add each item." },
+      { q: "a = [1, 2, 3]\na.extend([4, 5])\nprint(len(a))", options: ["5", "4", "2"], answer: 0, why: "extend adds each item separately; append would add the whole list as one item." },
+      { q: "a = [10, 20, 30]\nx = a.pop()\nprint(x, a)", options: ["30 [10, 20]", "10 [20, 30]", "30 [10, 20, 30]"], answer: 0, why: "pop() removes and returns the LAST item." },
+      { q: "a = [3, 1, 2]\nb = sorted(a)\nprint(a, b)", options: ["[3, 1, 2] [1, 2, 3]", "[1, 2, 3] [1, 2, 3]", "None [1, 2, 3]"], answer: 0, why: "sorted() returns a new list and leaves the original alone." },
     ],
   },
   {
@@ -313,6 +362,9 @@ const LESSONS = [
     quiz: [
       { q: "print(type((5)))", options: ["<class 'tuple'>", "<class 'int'>"], answer: 1, why: "Brackets alone don't make a tuple; the comma does." },
       { q: "t = (1, 2, 3)\nt[0] = 9", options: ["t becomes (9, 2, 3)", "TypeError", "Nothing happens"], answer: 1, why: "Tuples are immutable." },
+      { q: "print(type((5,)))", options: ["<class 'tuple'>", "<class 'int'>", "<class 'list'>"], answer: 0, why: "The trailing comma is what makes a one-item tuple." },
+      { q: "name, price = (\"Dosa\", 130)\nprint(price)", options: ["130", "Dosa", "('Dosa', 130)"], answer: 0, why: "Unpacking assigns items in order: name gets Dosa, price gets 130." },
+      { q: "a, b = (1, 2, 3)", options: ["ValueError", "a=1, b=2", "a=1, b=(2, 3)"], answer: 0, why: "Three values can't fit into two names: too many values to unpack." },
     ],
   },
   {
@@ -329,6 +381,9 @@ const LESSONS = [
     quiz: [
       { q: "print(type({}))", options: ["<class 'set'>", "<class 'dict'>"], answer: 1, why: "Empty curly braces make a dictionary." },
       { q: "print(len({1, 2, 2, 3, 3, 3}))", options: ["6", "3"], answer: 1, why: "A set keeps only unique items." },
+      { q: "a = {1, 2, 3}\nb = {2, 3, 4}\nprint(a & b)", options: ["{2, 3}", "{1, 2, 3, 4}", "{1, 4}"], answer: 0, why: "& keeps only the items in BOTH sets." },
+      { q: "a = {1, 2, 3}\nb = {2, 3, 4}\nprint(a | b)", options: ["{1, 2, 3, 4}", "{2, 3}", "{1, 4}"], answer: 0, why: "| combines both sets, without duplicates." },
+      { q: "s = {1, 2}\ns.add(2)\nprint(len(s))", options: ["2", "3", "Error"], answer: 0, why: "2 is already in the set, so adding it again changes nothing." },
     ],
   },
   {
@@ -346,6 +401,9 @@ const LESSONS = [
     quiz: [
       { q: 'd = {"a": 1}\nprint(d.get("b"))', options: ["KeyError", "None", "0"], answer: 1, why: ".get returns None (or your default) when the key is missing." },
       { q: 'd = {"a": 1, "a": 2}\nprint(d)', options: ["{'a': 1}", "{'a': 2}", "Error"], answer: 1, why: "Keys are unique; the later value overwrites the earlier one." },
+      { q: "d = {\"tea\": 10}\nprint(d[\"coffee\"])", options: ["None", "KeyError", "0"], answer: 1, why: "Square brackets crash on a missing key." },
+      { q: "d = {\"tea\": 10}\nprint(d.get(\"coffee\", 0))", options: ["0", "None", "KeyError"], answer: 0, why: "get() returns the default you give it when the key is missing." },
+      { q: "d = {\"a\": 1, \"b\": 2}\nfor k in d:\n    print(k, end=' ')", options: ["a b", "1 2", "('a', 1) ('b', 2)"], answer: 0, why: "Looping over a dict gives its keys. Use d.items() for pairs." },
     ],
   },
   {
@@ -362,6 +420,9 @@ const LESSONS = [
     quiz: [
       { q: "a = [1, 2]\nb = a\nb.append(3)\nprint(a)", options: ["[1, 2]", "[1, 2, 3]"], answer: 1, why: "a and b are the same list." },
       { q: "a = [1, 2]\nb = a[:]\nb.append(3)\nprint(a)", options: ["[1, 2]", "[1, 2, 3]"], answer: 0, why: "a[:] makes a new list, so a is unaffected." },
+      { q: "def add(lst):\n    lst.append(9)\nnums = [1]\nadd(nums)\nprint(nums)", options: ["[1, 9]", "[1]", "None"], answer: 0, why: "The function gets the same list object, so the change shows outside." },
+      { q: "a = [[1], [2]]\nb = a.copy()\nb[0].append(5)\nprint(a)", options: ["[[1, 5], [2]]", "[[1], [2]]", "Error"], answer: 0, why: "copy() is shallow: the inner lists are still shared." },
+      { q: "a = [1, 2]\nb = list(a)\nprint(a == b, a is b)", options: ["True False", "True True", "False False"], answer: 0, why: "Same contents (==), but list() made a different object (is)." },
     ],
   },
   {
@@ -378,6 +439,9 @@ const LESSONS = [
     quiz: [
       { q: "print([x * x for x in range(4)])", options: ["[1, 4, 9, 16]", "[0, 1, 4, 9]", "[0, 2, 4, 6]"], answer: 1, why: "range(4) is 0, 1, 2, 3." },
       { q: "print({n: len(n) for n in ['tea', 'coffee']})", options: ["{'tea': 3, 'coffee': 6}", "['tea', 'coffee']", "{3: 'tea', 6: 'coffee'}"], answer: 0, why: "Each name becomes a key, and its length becomes the value." },
+      { q: "print([n for n in range(10) if n % 3 == 0])", options: ["[0, 3, 6, 9]", "[3, 6, 9]", "[0, 1, 2]"], answer: 0, why: "The filter keeps numbers divisible by 3, and 0 counts." },
+      { q: "print([x if x > 0 else 0 for x in [-2, 5, -1]])", options: ["[0, 5, 0]", "[5]", "[-2, 5, -1]"], answer: 0, why: "if/else at the FRONT changes each value; it doesn't filter." },
+      { q: "print({x % 2 for x in [1, 2, 3, 4]})", options: ["{0, 1}", "{1, 0, 1, 0}", "[1, 0, 1, 0]"], answer: 0, why: "Curly braces without key: value make a set, so duplicates vanish." },
     ],
   },
   {
@@ -391,6 +455,8 @@ const LESSONS = [
       { q: "You need to store each product ID and look up its price instantly.", options: ["list", "tuple", "set", "dict"], answer: 3, why: "Lookup by key is exactly what a dict is for." },
       { q: "You need the unique cities customers came from.", options: ["list", "tuple", "set", "dict"], answer: 2, why: "Sets automatically drop duplicates." },
       { q: "Which can be a dictionary key?", options: ["[1, 2]", "(1, 2)", "{1, 2}"], answer: 1, why: "Keys must be immutable; a tuple is, a list and a set are not." },
+      { q: "You need an ordered to-do list you can add to and reorder.", options: ["list", "set", "tuple"], answer: 0, why: "Lists keep order and can change." },
+      { q: "You need fixed (latitude, longitude) pairs that must never change.", options: ["list", "tuple", "set"], answer: 1, why: "Tuples are ordered and can't be changed after creation." },
     ],
   },
 
@@ -411,6 +477,9 @@ const LESSONS = [
     quiz: [
       { q: "def f():\n    print('hi')\nx = f()\nprint(x)", options: ["hi then None", "hi then hi", "None"], answer: 0, why: "f prints 'hi' but returns nothing, so x is None." },
       { q: "def f():\n    return 1\n    return 2\nprint(f())", options: ["1", "2", "1 2"], answer: 0, why: "The first return exits the function immediately." },
+      { q: "def double(n):\n    return n * 2\nprint(double(double(3)))", options: ["12", "6", "Error"], answer: 0, why: "The inner call gives 6, then double(6) gives 12." },
+      { q: "def greet(name):\n    print('Hi', name)\ngreet('Asha')", options: ["Hi Asha", "Hi name", "Nothing"], answer: 0, why: "name holds whatever value you pass in." },
+      { q: "def f():\n    pass\nprint(f())", options: ["None", "pass", "Error"], answer: 0, why: "A function without return gives back None." },
     ],
   },
   {
@@ -428,6 +497,9 @@ const LESSONS = [
     quiz: [
       { q: "def f(*args):\n    return type(args)\nprint(f(1, 2))", options: ["<class 'list'>", "<class 'tuple'>"], answer: 1, why: "*args always collects into a tuple." },
       { q: "def f(**kw):\n    return kw\nprint(f(a=1, b=2))", options: ["{'a': 1, 'b': 2}", "(1, 2)", "Error"], answer: 0, why: "**kwargs collects keyword arguments into a dict." },
+      { q: "def f(a, b=10):\n    return a + b\nprint(f(1), f(1, 2))", options: ["11 3", "11 12", "Error"], answer: 0, why: "The default is used only when you don't pass b." },
+      { q: "def f(a, b):\n    return a - b\nprint(f(b=1, a=5))", options: ["4", "-4", "Error"], answer: 0, why: "Keyword arguments match by name, so the order you write them doesn't matter." },
+      { q: "def f(*nums):\n    return sum(nums)\nprint(f())", options: ["0", "None", "Error"], answer: 0, why: "With no arguments, nums is an empty tuple, and sum(()) is 0." },
     ],
   },
   {
@@ -445,6 +517,9 @@ const LESSONS = [
     quiz: [
       { q: "x = 1\ndef f():\n    x = 2\nf()\nprint(x)", options: ["1", "2"], answer: 0, why: "x = 2 creates a new local x; the global x is untouched." },
       { q: "What does LEGB stand for?", options: ["Local, Enclosing, Global, Built-in", "List, Element, Global, Base", "Local, External, Global, Base"], answer: 0, why: "It is the order Python searches for a name." },
+      { q: "count = 0\ndef inc():\n    count += 1\ninc()", options: ["count becomes 1", "UnboundLocalError", "Nothing happens"], answer: 1, why: "Assigning makes count local, so Python reads it before it has a value." },
+      { q: "count = 0\ndef inc():\n    global count\n    count += 1\ninc()\nprint(count)", options: ["1", "0", "Error"], answer: 0, why: "global lets the function change the variable at the top of the file." },
+      { q: "def outer():\n    x = 'outer'\n    def inner():\n        return x\n    return inner()\nprint(outer())", options: ["outer", "x", "Error"], answer: 0, why: "inner finds x in the Enclosing function (the E in LEGB)." },
     ],
   },
   {
@@ -462,6 +537,10 @@ const LESSONS = [
     hint: "Default to None, then create the list inside",
     quiz: [
       { q: "def f(x, l=[]):\n    l.append(x)\n    return l\nf(1)\nprint(f(2))", options: ["[2]", "[1, 2]", "Error"], answer: 1, why: "The same default list is reused across calls." },
+      { q: "def f(x, l=None):\n    if l is None:\n        l = []\n    l.append(x)\n    return l\nf(1)\nprint(f(2))", options: ["[2]", "[1, 2]", "None"], answer: 0, why: "Using None as the default creates a fresh list on every call: the safe fix." },
+      { q: "def f(n=0):\n    n += 1\n    return n\nf()\nprint(f())", options: ["1", "2", "0"], answer: 0, why: "Numbers can't be changed in place, so a 0 default is safe." },
+      { q: "Which default value causes the mutable default trap?", options: ["None", "0", "[]", "\"\""], answer: 2, why: "Only mutable defaults like [], {} or set() are shared between calls." },
+      { q: "def add(item, cart={}):\n    cart[item] = 1\n    return cart\nadd('tea')\nprint(add('dosa'))", options: ["{'tea': 1, 'dosa': 1}", "{'dosa': 1}", "Error"], answer: 0, why: "The same dict is reused on every call, so 'tea' is still there." },
     ],
   },
   {
@@ -478,6 +557,9 @@ const LESSONS = [
     quiz: [
       { q: "You run report.py directly. Inside it, what is __name__?", options: ["\"report\"", "\"__main__\"", "\"report.py\""], answer: 1, why: "A file run directly is always __main__." },
       { q: "Which import lets you write sqrt(9) without a prefix?", options: ["import math", "from math import sqrt", "import sqrt"], answer: 1, why: "from module import name puts that name directly into your file." },
+      { q: "import math\nprint(math.sqrt(16))", options: ["4.0", "4", "Error"], answer: 0, why: "math.sqrt always returns a float." },
+      { q: "import math as m\nprint(m.floor(3.7))", options: ["3", "4", "Error"], answer: 0, why: "as gives the module a short name; floor rounds down." },
+      { q: "Why shouldn't you name your own file random.py?", options: ["Python refuses to run it", "It hides the real random module", "It makes the file slower"], answer: 1, why: "import random would load your file instead of Python's module." },
     ],
   },
   {
@@ -490,6 +572,9 @@ const LESSONS = [
     quiz: [
       { q: "def f(x: int) -> int:\n    return x * 2\nprint(f('ab'))", options: ["TypeError", "abab", "4"], answer: 1, why: "Type hints are not checked at runtime; 'ab' * 2 is 'abab'." },
       { q: "Which name follows PEP 8 for a variable?", options: ["TotalSales", "totalSales", "total_sales"], answer: 2, why: "Variables and functions use snake_case." },
+      { q: "def f():\n    \"\"\"Say hi.\"\"\"\n    return 1\nprint(f.__doc__)", options: ["Say hi.", "None", "f"], answer: 0, why: "The docstring is stored on the function as __doc__." },
+      { q: "How many spaces does PEP 8 use for one indent level?", options: ["2", "4", "8"], answer: 1, why: "PEP 8 says 4 spaces per indent level." },
+      { q: "Which name follows PEP 8 for a function?", options: ["CalculateTotal", "calculate_total", "calculateTotal"], answer: 1, why: "Functions use snake_case, like variables." },
     ],
   },
   {
@@ -502,6 +587,9 @@ const LESSONS = [
     quiz: [
       { q: "Which command saves your installed packages to a file?", options: ["pip save", "pip freeze > requirements.txt", "python -m venv"], answer: 1, why: "pip freeze lists packages with exact versions." },
       { q: "What should you push to GitHub?", options: ["The venv folder", "requirements.txt", "Both"], answer: 1, why: "Others recreate the environment from requirements.txt." },
+      { q: "Which command creates a virtual environment called venv?", options: ["pip install venv", "python -m venv venv", "venv create"], answer: 1, why: "python -m venv <folder> creates it." },
+      { q: "Which command installs everything listed in requirements.txt?", options: ["pip install requirements.txt", "pip install -r requirements.txt", "pip freeze requirements.txt"], answer: 1, why: "-r tells pip to read the package list from a file." },
+      { q: "Why use a separate venv for each project?", options: ["It makes Python faster", "Each project can use its own package versions", "GitHub requires it"], answer: 1, why: "Separate environments stop projects from clashing over versions." },
     ],
   },
   // ───────────────────────── SESSION 5 ─────────────────────────
