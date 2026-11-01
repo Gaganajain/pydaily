@@ -35,21 +35,19 @@ export function rateLimiter(max, windowMs) {
   };
 }
 
-// Upstash Redis over its REST API. Vercel's Upstash integration sets one of these pairs.
-const REDIS_URL = () => process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = () => process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-export const redisReady = () => !!(REDIS_URL() && REDIS_TOKEN());
+// Supabase over its REST API (tables and SQL functions from supabase.sql).
+// The key must be the server-only secret key, never the public anon/publishable one.
+const SB_URL = () => (process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+const SB_KEY = () => process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const dbReady = () => !!(SB_URL() && SB_KEY());
 
-// Runs several Redis commands in one request; returns their results in order
-export async function redis(commands) {
-  const res = await fetch(`${REDIS_URL()}/pipeline`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${REDIS_TOKEN()}`, "Content-Type": "application/json" },
-    body: JSON.stringify(commands),
-  });
-  if (!res.ok) throw new Error(`redis ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return (await res.json()).map((r) => {
-    if (r.error) throw new Error(`redis: ${r.error}`);
-    return r.result;
-  });
+// path is relative to /rest/v1/, e.g. "rpc/track_event" or "visitors?select=*"
+export async function supabase(path, { method = "GET", body } = {}) {
+  const key = SB_KEY();
+  const headers = { apikey: key, "Content-Type": "application/json" };
+  if (key.startsWith("eyJ")) headers.Authorization = `Bearer ${key}`; // older JWT-style service_role keys
+  const res = await fetch(`${SB_URL()}/rest/v1/${path}`, { method, headers, body: body && JSON.stringify(body) });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`supabase ${res.status}: ${text.slice(0, 200)}`);
+  return text ? JSON.parse(text) : null;
 }
