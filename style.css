@@ -393,6 +393,56 @@ pre {
 .modal-box .gain { display: flex; justify-content: center; gap: 10px; margin: 16px 0 6px; flex-wrap: wrap; }
 .modal-box .row { justify-content: center; margin-top: 18px; }
 
+/* ───────── tutor chat ───────── */
+.chat-fab {
+  position: fixed; right: 20px; bottom: 20px; z-index: 70; display: flex; align-items: center; gap: 8px;
+  background: var(--yellow); color: #15171e; border: 2px solid var(--line); border-radius: 999px;
+  padding: 11px 18px; font: 700 .95rem "Space Grotesk", sans-serif; cursor: pointer;
+  box-shadow: 4px 4px 0 var(--shadow); transition: transform .1s, box-shadow .1s;
+}
+.chat-fab:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--shadow); }
+.chat {
+  position: fixed; right: 20px; bottom: 20px; z-index: 75; display: flex; flex-direction: column;
+  width: min(410px, calc(100vw - 32px)); height: min(620px, calc(100vh - 100px));
+  background: var(--panel); border: 2px solid var(--line); border-radius: 20px; box-shadow: 6px 6px 0 var(--shadow);
+  overflow: hidden; animation: zoom .25s cubic-bezier(.2,1.3,.4,1); transform-origin: bottom right;
+}
+.chat-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--yellow); color: #15171e; border-bottom: 2px solid var(--line); }
+.chat-head .icon-btn { width: 34px; height: 34px; background: #fff; color: #15171e; border-color: #15171e; }
+.chat-title { flex: 1; min-width: 0; line-height: 1.2; }
+.chat-title b { font: 700 1.05rem "Space Grotesk"; display: block; }
+.chat-title small { font-size: .75rem; opacity: .75; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-log { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.msg { max-width: 88%; padding: 9px 13px; border: 2px solid var(--line); border-radius: 14px; font-size: .92rem; line-height: 1.55; overflow-wrap: anywhere; }
+.msg.user { align-self: flex-end; background: var(--yellow); color: #15171e; border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--panel); border-bottom-left-radius: 4px; }
+.msg.err { background: var(--red-soft); }
+.msg pre { font-size: .8rem; margin: 8px 0; padding: 10px 12px; }
+.msg code { font-size: .85em; background: var(--soft); padding: 1px 5px; border-radius: 5px; }
+.msg.user code { background: rgba(0,0,0,.08); }
+.typing { display: inline-flex; gap: 4px; margin-left: 4px; vertical-align: middle; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: dot 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes dot { 0%,100% { opacity: .25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+.chat-empty { margin: auto 0; text-align: center; color: var(--ink); }
+.chat-empty .big { font-size: 44px; }
+.chat-empty p { margin: 6px 0 14px; font-size: .92rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip-btn { border: 2px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: 600 .82rem Inter, sans-serif; cursor: pointer; box-shadow: var(--sh-sm); }
+.chip-btn:hover { background: var(--yellow); color: #15171e; }
+.chat-form { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px 4px; border-top: 2px solid var(--line); }
+.chat-form textarea {
+  flex: 1; resize: none; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; max-height: 140px;
+  font: .95rem/1.4 Inter, sans-serif; background: var(--panel-2); color: var(--ink); outline: none;
+}
+.chat-form textarea:focus { box-shadow: 0 0 0 3px var(--yellow); }
+.chat-form .btn { padding: 9px 14px; }
+.chat-note { margin: 0; padding: 2px 12px 8px; font-size: .7rem; color: var(--muted); text-align: center; }
+@media (max-width: 700px) {
+  .chat { right: 0; bottom: 0; width: 100vw; height: 88vh; border-radius: 20px 20px 0 0; box-shadow: none; }
+  .chat-fab { right: 14px; bottom: 14px; padding: 10px 14px; }
+}
+
 #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 90; }
 
 #toast {

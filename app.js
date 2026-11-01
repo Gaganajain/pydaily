@@ -463,6 +463,7 @@ function showOutput(box, r, verdict, state) {
   if (!html) html = `<span class="muted">(no output)</span>`;
   if (verdict) html += `\n\n<span class="verdict">${esc(verdict)}</span>`;
   pre.innerHTML = html;
+  if (box.id === "out" && $("#askErr")) $("#askErr").hidden = !(r.error || state === "bad");
 }
 
 // ───────────── lesson ─────────────
@@ -512,6 +513,7 @@ function viewLesson(l, opts = {}) {
       <p class="small muted" style="margin-top:8px"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> run · <kbd>Tab</kbd> indents · auto-indent after <code>:</code></p>
       <p class="small" id="pyStatus"></p>
       ${consoleHTML("out", "console")}
+      <div class="row"><button class="btn ghost" id="askErr" hidden>💬 Ask the tutor why</button></div>
     </div>` : `<p class="small" id="pyStatus"></p>`}
     <div class="card section" id="s-quiz"><h3><span class="num">${l.task ? "06" : "05"}</span> Quick check</h3>${quizHTML(l.quiz, "")}</div>
     <div class="row">
@@ -586,6 +588,7 @@ function viewLesson(l, opts = {}) {
     if (rec.firstTime) celebrate(l, XP.task, rec.leveledUp);
     else toast("✅ Still got it! +10 XP");
   };
+  $("#askErr").onclick = () => { openChat(); sendChat("My code isn't working. What's wrong, and how do I fix it?"); };
   if ($("#hint")) $("#hint").onclick = () => toast("💡 " + l.hint);
   $("#sol").onclick = () => {
     const b = $("#sol");
@@ -726,6 +729,132 @@ function viewExam(session) {
   show();
 }
 
+// ───────────── tutor chat ─────────────
+// The GitHub Pages copy has no server, so it borrows the Vercel one.
+const CHAT_URL = location.hostname.endsWith("github.io") ? "https://pydaily.vercel.app/api/chat" : "/api/chat";
+const CHAT_KEY = "pydaily.chat";
+let chat = [], chatBusy = false;
+try { chat = JSON.parse(sessionStorage.getItem(CHAT_KEY)) || []; } catch {}
+const saveChat = () => { try { sessionStorage.setItem(CHAT_KEY, JSON.stringify(chat.slice(-20))); } catch {} };
+const currentLesson = () => LESSONS.find((l) => l.id === location.hash.slice(1)) || null;
+
+// what the tutor gets to see about the page you're on
+function chatContext() {
+  const l = currentLesson();
+  if (!l) return "";
+  const parts = [`Lesson: ${l.title} (Session ${l.session} · ${SESSIONS[l.session]})`, `Meaning: ${l.meaning}`, `Syntax:\n${l.syntax}`, `Exam trap: ${l.gotcha}`];
+  if (l.task) parts.push(`Coding task: ${l.task}`);
+  const code = $("#code")?.value;
+  if (code && code.trim() !== l.starter.trim()) parts.push(`Student's code:\n${code}`);
+  const out = $("#out pre")?.textContent;
+  if (out && !/^Output appears here/.test(out)) parts.push(`Last output:\n${out}`);
+  return parts.join("\n\n");
+}
+
+// tiny markdown: ```code``` blocks, `inline`, **bold**, line breaks
+function renderMd(src) {
+  return src.split(/```[a-z]*\n?([\s\S]*?)(?:```|$)/).map((part, i) => {
+    if (i % 2) return part.trim() ? codeBlock(part.replace(/\n$/, "")) : "";
+    return esc(part).replace(/`([^`\n]+)`/g, "<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>")
+      .replace(/^\n+|\n+$/g, "").replace(/\n/g, "<br>");
+  }).join("");
+}
+
+function chatSuggestions() {
+  const l = currentLesson();
+  if (!l) return ["What should I learn first?", "List vs tuple: what's the difference?", "Explain f-strings simply"];
+  const s = ["Explain this lesson more simply", "Give me one more example", "Ask me a quick question to test me"];
+  if (l.task) s.splice(2, 0, "Give me a hint for the task");
+  return s;
+}
+
+function renderChat() {
+  const log = $("#chatLog");
+  if (!chat.length) {
+    const l = currentLesson();
+    log.innerHTML = `<div class="chat-empty"><div class="big">🐍</div>
+      <p><b>Stuck on something?</b><br>${l ? `Ask about <b>${esc(l.title)}</b>, your code or any Python doubt.` : "Ask any Python doubt, big or small."}</p>
+      <div class="chips">${chatSuggestions().map((s) => `<button class="chip-btn">${esc(s)}</button>`).join("")}</div></div>`;
+    $$(".chip-btn", log).forEach((b) => (b.onclick = () => sendChat(b.textContent)));
+    return;
+  }
+  log.innerHTML = chat.map((m, i) => `<div class="msg ${m.role === "user" ? "user" : "bot"}${m.error ? " err" : ""}">${
+    m.role === "user" ? esc(m.content).replace(/\n/g, "<br>") : renderMd(m.content) + (chatBusy && i === chat.length - 1 ? '<span class="typing"><i></i><i></i><i></i></span>' : "")
+  }</div>`).join("");
+  log.scrollTop = log.scrollHeight;
+}
+
+function updateChatCtx() {
+  const l = currentLesson();
+  $("#chatCtx").textContent = l ? `About: ${l.title}` : "Any Python doubt";
+  if (!chat.length && !$("#chat").hidden) renderChat();
+}
+
+function openChat() {
+  $("#chat").hidden = false;
+  $("#chatBtn").hidden = true;
+  updateChatCtx();
+  renderChat();
+  $("#chatInput").focus();
+}
+function closeChat() {
+  $("#chat").hidden = true;
+  $("#chatBtn").hidden = false;
+}
+
+async function sendChat(text) {
+  text = text.trim();
+  if (!text || chatBusy) return;
+  chat.push({ role: "user", content: text });
+  const history = chat.filter((m) => !m.error);
+  const bot = { role: "assistant", content: "" };
+  chat.push(bot);
+  chatBusy = true;
+  renderChat();
+  try {
+    const res = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history, context: chatContext() }),
+    });
+    const plain = (res.headers.get("content-type") || "").startsWith("text/plain");
+    if (!res.ok) {
+      bot.error = true;
+      bot.content = "⚠ " + (plain ? await res.text() : "The tutor only runs on the live site, pydaily.vercel.app.");
+    } else {
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bot.content += dec.decode(value, { stream: true });
+        renderChat();
+      }
+      if (bot.content.includes("\n\n⚠ ")) bot.error = !bot.content.split("\n\n⚠ ")[0].trim();
+    }
+  } catch {
+    bot.error = true;
+    bot.content = "⚠ Couldn't reach the tutor. Check your internet connection and try again.";
+  }
+  if (!bot.content.trim()) { bot.error = true; bot.content = "⚠ No answer came back. Try again."; }
+  chatBusy = false;
+  saveChat();
+  renderChat();
+}
+
+(function initChat() {
+  const input = $("#chatInput");
+  const grow = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; };
+  $("#chatBtn").onclick = openChat;
+  $("#chatClose").onclick = closeChat;
+  $("#chatClear").onclick = () => { if (chatBusy) return; chat = []; saveChat(); renderChat(); input.focus(); };
+  $("#chatForm").onsubmit = (e) => { e.preventDefault(); const t = input.value; input.value = ""; grow(); sendChat(t); };
+  input.addEventListener("input", grow);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#chatForm").requestSubmit(); }
+    else if (e.key === "Escape") { e.stopPropagation(); closeChat(); $("#chatBtn").focus(); }
+  });
+})();
+
 // ───────────── command palette ─────────────
 let palSel = 0;
 function openPalette() {
@@ -777,6 +906,7 @@ function route() {
   const r = location.hash.slice(1);
   renderSidebar();
   renderStats();
+  updateChatCtx();
   if (!r) viewHome();
   else if (r === "review") viewReview();
   else if (r === "exam") viewExam(0);

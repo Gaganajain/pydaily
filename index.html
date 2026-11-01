@@ -50,6 +50,20 @@
     </div>
   </div>
   <div id="modal" class="overlay" hidden></div>
+  <button id="chatBtn" class="chat-fab" aria-label="Ask the tutor">💬 <span>Ask a doubt</span></button>
+  <section id="chat" class="chat" hidden aria-label="Ask the tutor">
+    <header class="chat-head">
+      <div class="chat-title"><b>Ask PyDaily</b><small id="chatCtx"></small></div>
+      <button id="chatClear" class="icon-btn" aria-label="Start a new chat" title="New chat">↺</button>
+      <button id="chatClose" class="icon-btn" aria-label="Close chat">✕</button>
+    </header>
+    <div id="chatLog" class="chat-log" aria-live="polite"></div>
+    <form id="chatForm" class="chat-form">
+      <textarea id="chatInput" rows="1" placeholder="Ask anything about Python…" aria-label="Your question"></textarea>
+      <button class="btn primary" id="chatSend" type="submit" aria-label="Send">➤</button>
+    </form>
+    <p class="chat-note">AI tutor. Answers can be wrong, so run the code to check.</p>
+  </section>
   <canvas id="confetti" aria-hidden="true"></canvas>
   <div id="toast" role="status"></div>
 
